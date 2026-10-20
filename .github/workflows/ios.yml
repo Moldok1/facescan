@@ -6,13 +6,16 @@ on:
     paths: ["ios/**", ".github/workflows/ios.yml"]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Compiler FaceScan.ipa
     runs-on: macos-15
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Xcode
         run: |
@@ -46,7 +49,7 @@ jobs:
           zip -qry FaceScan.ipa Payload
           ls -la FaceScan.ipa
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: FaceScan-ipa
           path: ios/FaceScan.ipa
@@ -65,7 +68,7 @@ jobs:
 
       - name: Journal de compilation
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: build-log
           path: ios/build.log
