@@ -1,0 +1,48 @@
+# Projet Xcode généré en CI par XcodeGen (aucun Mac nécessaire en local).
+name: FaceScan
+options:
+  bundleIdPrefix: fr.altiore
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    SWIFT_STRICT_CONCURRENCY: minimal
+    MARKETING_VERSION: "0.2"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  FaceScan:
+    type: application
+    platform: iOS
+    sources:
+      - path: FaceScan.swiftpm/App
+      - path: FaceScan.swiftpm/Capture
+      - path: FaceScan.swiftpm/Reconstruction
+      - path: FaceScan.swiftpm/Export
+      - path: FaceScan.swiftpm/Portal
+      - path: FaceScan.swiftpm/UI
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: fr.altiore.facescan
+        TARGETED_DEVICE_FAMILY: "1,2"
+        INFOPLIST_FILE: Info.plist
+        ENABLE_BITCODE: NO
+        SWIFT_OPTIMIZATION_LEVEL: "-O"
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: FaceScan
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSCameraUsageDescription: "La caméra TrueDepth est utilisée pour scanner le visage du patient en 3D. Les données restent sur l'appareil, sauf envoi vers le portail du cabinet."
+        UILaunchScreen: {}
+        UIRequiredDeviceCapabilities: [arm64]
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown]
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
+        ITSAppUsesNonExemptEncryption: false
+        CFBundleURLTypes:
+          - CFBundleURLName: fr.altiore.facescan.pair
+            CFBundleURLSchemes: [facescan]

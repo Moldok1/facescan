@@ -1,0 +1,180 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────── Authentification (BetterAuth) ─────────────
+
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+
+  deviceTokens DeviceToken[]
+  auditLogs    AuditLog[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// ───────────── Métier ─────────────
+
+model Patient {
+  id        String    @id @default(cuid())
+  /// Identifiant saisi sur l'iPhone (ex. P-2026-0142). Unique.
+  ref       String    @unique
+  lastName  String?
+  firstName String?
+  birthDate DateTime? @db.Date
+  notes     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  scans     Scan[]
+
+  @@map("patient")
+}
+
+enum ScanType {
+  REPOS
+  SOURIRE
+  ECARTEURS
+  AUTRE
+}
+
+model Scan {
+  id                String     @id @default(cuid())
+  patientId         String
+  patient           Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  type              ScanType
+  capturedAt        DateTime
+  uploadedAt        DateTime   @default(now())
+  deviceName        String?
+  /// Identifiant du scan côté iPhone (nom du dossier) — évite les doublons en cas de renvoi.
+  clientScanId      String?    @unique
+  vertexCount       Int?
+  triangleCount     Int?
+  framesIntegrated  Int?
+  medianAlignmentMm Float?
+  voxelSizeMm       Float?
+  widthMm           Float?
+  heightMm          Float?
+  depthMm           Float?
+  notes             String?
+  files             ScanFile[]
+
+  @@index([patientId, capturedAt])
+  @@map("scan")
+}
+
+enum FileKind {
+  STL
+  PLY
+  OBJ
+}
+
+model ScanFile {
+  id          String   @id @default(cuid())
+  scanId      String
+  scan        Scan     @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  kind        FileKind
+  filename    String
+  sizeBytes   Int
+  sha256      String
+  storageKey  String   @unique
+  encrypted   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@unique([scanId, kind])
+  @@map("scan_file")
+}
+
+/// Jeton d'un iPhone autorisé à envoyer des scans (seule l'empreinte SHA-256 est stockée).
+model DeviceToken {
+  id          String    @id @default(cuid())
+  name        String
+  tokenHash   String    @unique
+  prefix      String
+  createdById String
+  createdBy   User      @relation(fields: [createdById], references: [id])
+  createdAt   DateTime  @default(now())
+  lastUsedAt  DateTime?
+  revokedAt   DateTime?
+
+  auditLogs AuditLog[]
+
+  @@map("device_token")
+}
+
+/// Traçabilité des accès aux données (consultation, téléchargement, envoi, suppression).
+model AuditLog {
+  id            String       @id @default(cuid())
+  createdAt     DateTime     @default(now())
+  userId        String?
+  user          User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  deviceTokenId String?
+  deviceToken   DeviceToken? @relation(fields: [deviceTokenId], references: [id], onDelete: SetNull)
+  action        String
+  targetType    String?
+  targetId      String?
+  detail        String?
+  ip            String?
+
+  @@index([createdAt])
+  @@map("audit_log")
+}
