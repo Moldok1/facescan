@@ -154,7 +154,10 @@ export async function createDeviceToken(_: NewTokenState, form: FormData): Promi
   const host = h.get("x-forwarded-host") ?? h.get("host");
   const base = process.env.BETTER_AUTH_URL ?? `${proto}://${host}`;
   const pairUrl = `facescan://pair?url=${encodeURIComponent(base)}&token=${encodeURIComponent(token)}&name=${encodeURIComponent(name)}`;
-  const qr = await QRCode.toDataURL(pairUrl, { margin: 1, width: 280, errorCorrectionLevel: "M" });
+  // Le QR code pointe vers une page https (toujours reconnue par l'appareil photo de l'iPhone).
+  // Le jeton est placé après « # » : il reste dans le téléphone et n'est jamais envoyé au serveur.
+  const qrUrl = `${base}/appairer#url=${encodeURIComponent(base)}&token=${encodeURIComponent(token)}&name=${encodeURIComponent(name)}`;
+  const qr = await QRCode.toDataURL(qrUrl, { margin: 1, width: 300, errorCorrectionLevel: "M" });
   revalidatePath("/reglages");
   return { token, qr, pairUrl };
 }
